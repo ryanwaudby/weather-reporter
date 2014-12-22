@@ -5,6 +5,10 @@ require "json"
 
 set :haml, :format => :html5
 
+def fahrenheit_to_celsius(f)
+  (f - 32) * 5.0 / 9.0
+end
+
 get "/" do
   haml :index
 end
@@ -21,7 +25,7 @@ get "/weather/:coordinates" do
   }
 
   chart_data_points = report["data"].map { |data|
-    data["temperature"]
+    fahrenheit_to_celsius data["temperature"]
   }
 
   {

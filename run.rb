@@ -13,12 +13,14 @@ get "/" do
   haml :index
 end
 
-get "/weather/:coordinates" do
+get "/weather/:location" do
   content_type :json
   FORCAST_URL = "https://api.forecast.io/forecast/fde80a8eb6c50e90b06661eb5c6840fd/"
+  GOOGLE_MAPS_CONVERSION_URL = "http://maps.googleapis.com/maps/api/geocode/json?sensor=true%27&address="
 
-  split_coordinates = params[:coordinates].split(", ")
-  report = JSON.parse(open("#{FORCAST_URL}#{split_coordinates[0]},#{split_coordinates[1]}").read)["hourly"]
+  location_data = JSON.parse(open("#{GOOGLE_MAPS_CONVERSION_URL}#{params[:location]}").read)
+  coordinates = location_data["results"][0]["geometry"]["viewport"]["northeast"]
+  report = JSON.parse(open("#{FORCAST_URL}#{coordinates["lat"]},#{coordinates["lng"]}").read)["hourly"]
 
   chart_labels = report["data"].map { |data|
     DateTime.strptime(data["time"].to_s, '%s').strftime("%H:%M")

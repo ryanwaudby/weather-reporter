@@ -1,5 +1,6 @@
 require "sinatra"
 require 'sinatra/reloader'
+require 'open-uri'
 require "json"
 
 set :haml, :format => :html5
@@ -10,29 +11,34 @@ end
 
 get "/weather/:coordinates" do
   content_type :json
+  FORCAST_URL = "https://api.forecast.io/forecast/fde80a8eb6c50e90b06661eb5c6840fd/"
+
+  split_coordinates = params[:coordinates].split(", ")
+  report = JSON.parse(open("#{FORCAST_URL}#{split_coordinates[0]},#{split_coordinates[1]}").read)["hourly"]
+
+  chart_labels = report["data"].map { |data|
+    DateTime.strptime(data["time"].to_s, '%s').strftime("%H:%M")
+  }
+
+  chart_data_points = report["data"].map { |data|
+    data["temperature"]
+  }
+
   {
-    labels: ["January", "February", "March", "April", "May", "June", "July"],
-    datasets: [
+    summary: report["summary"],
+    chart_data: {
+      labels: chart_labels,
+      datasets: [
       {
-            label: "My First dataset",
-            fillColor: "rgba(220,220,220,0.2)",
-            strokeColor: "rgba(220,220,220,1)",
-            pointColor: "rgba(220,220,220,1)",
-            pointStrokeColor: "#fff",
-            pointHighlightFill: "#fff",
-            pointHighlightStroke: "rgba(220,220,220,1)",
-            data: [65, 59, 80, 81, 56, 55, 40]
-        },
-        {
-            label: "My Second dataset",
-            fillColor: "rgba(151,187,205,0.2)",
-            strokeColor: "rgba(151,187,205,1)",
-            pointColor: "rgba(151,187,205,1)",
-            pointStrokeColor: "#fff",
-            pointHighlightFill: "#fff",
-            pointHighlightStroke: "rgba(151,187,205,1)",
-            data: [28, 48, 40, 19, 86, 27, 90]
-        }
-    ]
+        label: "Weather",
+        fillColor: "rgba(151,187,205,0.2)",
+        strokeColor: "rgba(151,187,205,1)",
+        pointColor: "rgba(151,187,205,1)",
+        pointStrokeColor: "#fff",
+        pointHighlightFill: "#fff",
+        pointHighlightStroke: "rgba(151,187,205,1)",
+        data: chart_data_points
+      }]
+    }
   }.to_json
 end
